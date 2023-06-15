@@ -1,13 +1,13 @@
-﻿namespace eCommerceAPI.Business.Users.Commands.Update
+﻿namespace eCommerceAPI.Business.Users.Queries.GetUserDetails
 {
-    public class UpdateUserInfoRequest
+    public class GetUserDetailsResponse
     {
-        public Guid UserId { get; set; }
         public string Name { get; set; }
         public string Email { get; set; }
         public string City { get; set; }
         public string Region { get; set; }
         public string AddressLine { get; set; }
         public string PostalCode { get; set; }
+        //public string Country { get; set; }
     }
 }

@@ -1,8 +1,5 @@
-﻿using eCommerceAPI.Business.Addresses.Commands.CreateAddress;
-using eCommerceAPI.Data;
-using eCommerceAPI.Data.Addresses;
+﻿using eCommerceAPI.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -35,22 +32,22 @@ namespace eCommerceAPI.Controllers.Addresses
         }
 
         [HttpPost]
-        public async Task<ActionResult> AddUserAddress([FromBody] Guid userId, CreateAddressRequest request)
-        {
-            var user = await _dbContext.Users.Where(x => x.Id == userId).FirstOrDefaultAsync();
-            if (user is not null)
-            {
-                _dbContext.Addresses.Include(x => x.User).Where(x => x.UserId == userId).Select(x => new Address
-                {
-                    City = request.City,
-                    Region = request.Region,
-                    AddressLine = request.AddressLine,
-                    PostalCode = request.PostalCode
-                });
-                return Ok("User Address added successfully");
-            }
-            return NotFound();
-        }
+        //public async Task<ActionResult> AddUserAddress([FromBody] Guid userId, CreateAddressRequest request)
+        //{
+        //    var user = await _dbContext.Users.Where(x => x.Id == userId).FirstOrDefaultAsync();
+        //    if (user is not null)
+        //    {
+        //        _dbContext.Addresses.Include(x => x.User).Where(x => x.UserId == userId).Select(x => new Address
+        //        {
+        //            City = request.City,
+        //            Region = request.Region,
+        //            AddressLine = request.AddressLine,
+        //            PostalCode = request.PostalCode
+        //        });
+        //        return Ok("User Address added successfully");
+        //    }
+        //    return NotFound();
+        //}
 
         // PUT api/<AddressController>/5
         [HttpPut("{id}")]

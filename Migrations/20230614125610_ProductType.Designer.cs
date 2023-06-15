@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eCommerceAPI.Data;
 
@@ -11,9 +12,10 @@ using eCommerceAPI.Data;
 namespace eCommerceAPI.Migrations
 {
     [DbContext(typeof(CommerceDbContext))]
-    partial class CommerceDbContextModelSnapshot : ModelSnapshot
+    [Migration("20230614125610_ProductType")]
+    partial class ProductType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -63,7 +65,7 @@ namespace eCommerceAPI.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("Addresses", (string)null);
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Favorites.Favorite", b =>
@@ -104,7 +106,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("OrderDetails", (string)null);
+                    b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Orders.Order", b =>
@@ -130,7 +132,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.PaymentTypes.PaymentType", b =>
@@ -147,7 +149,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PaymentTypes", (string)null);
+                    b.ToTable("PaymentTypes");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.ProductCategories.ProductCategory", b =>
@@ -164,7 +166,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductCategories", (string)null);
+                    b.ToTable("ProductCategories");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.ProductItems.ProductItem", b =>
@@ -197,7 +199,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("ProductTypeId");
 
-                    b.ToTable("ProductItems", (string)null);
+                    b.ToTable("ProductItems");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Products.Product", b =>
@@ -235,7 +237,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("ProductCategoryId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.ProductTypes.ProductType", b =>
@@ -252,7 +254,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProductTypes", (string)null);
+                    b.ToTable("ProductTypes");
 
                     b.HasData(
                         new
@@ -295,7 +297,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("ShoppingCartId");
 
-                    b.ToTable("ShoppingCartItems", (string)null);
+                    b.ToTable("ShoppingCartItems");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.ShoppingCarts.ShoppingCart", b =>
@@ -313,7 +315,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ShoppingCarts", (string)null);
+                    b.ToTable("ShoppingCarts");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.UserPaymentTypes.UserPaymentMethod", b =>
@@ -352,7 +354,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserPaymentMethods", (string)null);
+                    b.ToTable("UserPaymentMethods");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Users.User", b =>
@@ -374,7 +376,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("ProductUser", b =>
@@ -389,7 +391,7 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("UsersId");
 
-                    b.ToTable("ProductUser", (string)null);
+                    b.ToTable("ProductUser");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Addresses.Address", b =>

@@ -6,6 +6,7 @@ using eCommerceAPI.Data.PaymentTypes;
 using eCommerceAPI.Data.ProductCategories;
 using eCommerceAPI.Data.ProductItems;
 using eCommerceAPI.Data.Products;
+using eCommerceAPI.Data.ProductTypes;
 using eCommerceAPI.Data.ShoppingCartItems;
 using eCommerceAPI.Data.ShoppingCarts;
 using eCommerceAPI.Data.UserPaymentTypes;
@@ -28,6 +29,8 @@ namespace eCommerceAPI.Data
         public DbSet<ShoppingCartItem> ShoppingCartItems { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderDetail> OrderDetails { get; set; }
+        public DbSet<ProductType> ProductTypes { get; set; }
+        public DbSet<Favorite> Favorites { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,6 +50,12 @@ namespace eCommerceAPI.Data
 
             modelBuilder.Entity<Favorite>()
                 .ToTable("Favorites");
+            modelBuilder.Entity<ProductType>().HasData
+                (
+                new ProductType { Id = 1, Name = "Perfume" },
+                new ProductType { Id = 2, Name = "Eau de perfume" },
+                new ProductType { Id = 3, Name = "Eau de toilette" }
+                );
         }
     }
 }

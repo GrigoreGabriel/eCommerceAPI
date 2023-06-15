@@ -12,6 +12,7 @@ namespace eCommerceAPI.Data.Users
         public string Name { get; set; }
         public string Email { get; set; }
         public virtual Address? Address { get; set; }
+        public bool IsAdmin { get; set; }
         public ICollection<UserPaymentMethod>? UserPaymentMethods { get; set; }
         public virtual ICollection<Favorite>? Favorites { get; set; }
         public virtual ICollection<Order>? Orders { get; set; }
