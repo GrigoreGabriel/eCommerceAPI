@@ -1,4 +1,5 @@
 ﻿using eCommerceAPI.Business.Carts.Commands;
+using eCommerceAPI.Business.Carts.Queries;
 using eCommerceAPI.Data;
 using eCommerceAPI.Data.ShoppingCartItems;
 using eCommerceAPI.Data.ShoppingCarts;
@@ -62,8 +63,7 @@ namespace eCommerceAPI.Controllers.Carts
 
                 if (cart.ShoppingCartItems.Any(x => x.ProductItemId == request.ProductItemId))
                 {
-                    cart.ShoppingCartItems.FirstOrDefault(x => x.ProductItemId == request.ProductItemId).Quantity += request.Quantity;
-
+                    var item = cart.ShoppingCartItems.FirstOrDefault(x => x.ProductItemId == request.ProductItemId).Quantity += request.Quantity;
                     await _dbContext.AddAsync(cart, cancellationToken);
                     await _dbContext.SaveChangesAsync(cancellationToken);
                     return Ok("Item already exists in cart, only increased quantity");
@@ -87,7 +87,29 @@ namespace eCommerceAPI.Controllers.Carts
             }
             return Ok(cart);
         }
-
+        [HttpGet("cartContents")]
+        public async Task<List<GetCartContentsResponse>> GetProductSizes([FromQuery] GetCartContentsRequest request, CancellationToken cancellationToken)
+        {
+            var cart = await _dbContext.ShoppingCarts.FirstOrDefaultAsync(x => x.UserId == request.UserId);
+            if (cart is null)
+            {
+                return null;
+            }
+            var items = await _dbContext.ShoppingCartItems
+                .Where(x => x.ShoppingCartId == cart.Id)
+                .Include(x => x.ProductItem)
+                    .ThenInclude(x => x.Product)
+                    .Select(x => new GetCartContentsResponse
+                    {
+                        ProductImageUrl = x.ProductItem.Product.Image_Url,
+                        ProductName = $"{x.ProductItem.Product.Brand} {x.ProductItem.Product.Name}",
+                        ProductItemType = x.ProductItem.ProductType.Name,
+                        Quantity = x.Quantity,
+                        TotalItemValue = x.ProductItem.Price * x.Quantity,
+                    })
+                .ToListAsync(cancellationToken);
+            return items;
+        }
         // PUT api/<CartController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
