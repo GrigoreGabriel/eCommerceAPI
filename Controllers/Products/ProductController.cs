@@ -1,11 +1,16 @@
 ﻿using eCommerceAPI.Business.Products.Commands.AddProduct;
+using eCommerceAPI.Business.Products.Commands.AddProductItem;
 using eCommerceAPI.Business.Products.Queries.GetAll;
 using eCommerceAPI.Business.Products.Queries.GetById;
 using eCommerceAPI.Business.Products.Queries.GetProductCategories;
 using eCommerceAPI.Business.Products.Queries.GetProductDetails;
+using eCommerceAPI.Business.Products.Queries.GetProductPrice;
+using eCommerceAPI.Business.Products.Queries.GetProductShortDetails;
+using eCommerceAPI.Business.Products.Queries.GetProductSizes;
 using eCommerceAPI.Business.Products.Queries.GetProductStock;
 using eCommerceAPI.Business.Products.Queries.GetProductTypes;
 using eCommerceAPI.Data;
+using eCommerceAPI.Data.ProductItems;
 using eCommerceAPI.Data.Products;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +46,22 @@ namespace eCommerceAPI.Controllers.Products
             return list;
 
         }
+
+        [HttpGet("productShortDetails")]
+        public async Task<List<GetProductShortDetails>> GetProductShortDetails(CancellationToken cancellationToken)
+        {
+            var list = await _dbContext.Products.AsNoTracking().Include(x => x.ProductItems).Select(x => new GetProductShortDetails
+            {
+                Id = x.Id,
+                Name = $"{x.Brand} {x.Name}",
+                Variations = x.ProductItems.Count(),
+
+            }).ToListAsync(cancellationToken);
+
+            return list;
+
+        }
+
         [HttpGet("product/{id}")]
         public async Task<IActionResult> GetProductList(int id, CancellationToken cancellationToken)
         {
@@ -88,10 +109,11 @@ namespace eCommerceAPI.Controllers.Products
         [HttpGet("itemsInStock")]
         public async Task<List<GetProductStockResponse>> GetProductStock(CancellationToken cancellationToken)
         {
-            var list = await _dbContext.ProductItems.AsNoTracking().Include(x => x.Product).Select(x => new GetProductStockResponse
+            var list = await _dbContext.ProductItems.AsNoTracking().Include(x => x.Product).Include(x => x.ProductType).Select(x => new GetProductStockResponse
             {
                 Brand = x.Product.Brand,
                 Name = x.Product.Name,
+                Type = x.ProductType.Name,
                 QtyInStock = x.QtyInStock,
                 Price = x.Price,
                 Size = x.Size,
@@ -99,6 +121,19 @@ namespace eCommerceAPI.Controllers.Products
             return list;
 
         }
+        [HttpGet("stockValue")]
+        public async Task<int> GetStockValue(CancellationToken cancellationToken)
+        {
+            var totalValue = 0;
+            var items = await _dbContext.ProductItems.AsNoTracking().ToListAsync(cancellationToken);
+            foreach (var item in items)
+            {
+                totalValue += (item.Price * item.QtyInStock);
+            }
+            return totalValue;
+
+        }
+
 
         [HttpGet("productCategories")]
         public async Task<List<GetProductCategoriesResponse>> GetProductCategories(CancellationToken cancellationToken)
@@ -121,6 +156,40 @@ namespace eCommerceAPI.Controllers.Products
             }).ToListAsync(cancellationToken);
             return productTypes;
         }
+
+        [HttpGet("productConfigurations")]
+        public async Task<List<GetProductSizesResponse>> GetProductSizes([FromQuery] int productId, CancellationToken cancellationToken)
+        {
+            var productSizes = await _dbContext.ProductItems
+                .Where(x => x.ProductId == productId)
+                .Include(x => x.ProductType)
+                .AsNoTracking().Select(x => new GetProductSizesResponse
+                {
+                    ProductItemId = x.Id,
+                    Type = x.ProductType.Name,
+                    Size = x.Size,
+                    Price = x.Price
+                }).ToListAsync(cancellationToken);
+
+            return productSizes;
+        }
+        [HttpGet("productPrice")]
+        public async Task<GetProductPriceResponse> GetProductPrice([FromQuery] GetProductPriceRequest request, CancellationToken cancellationToken)
+        {
+            var product = await _dbContext.ProductItems
+                .Where(x => x.ProductId == request.ProductId)
+                .FirstOrDefaultAsync(x => x.ProductType.Name == request.Type && x.Size == request.Size, cancellationToken);
+            if (product is not null)
+            {
+                var response = new GetProductPriceResponse
+                {
+                    Price = product.Price,
+                };
+                return response;
+            }
+            return new GetProductPriceResponse { Price = 0 };
+        }
+
         [HttpPost("addProduct")]
         public async Task<ActionResult> AddProduct([FromBody] AddProductCommand request, CancellationToken cancellationToken)
         {
@@ -139,6 +208,29 @@ namespace eCommerceAPI.Controllers.Products
                 };
 
                 await _dbContext.AddAsync(product, cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return Ok(product);
+            }
+            return BadRequest();
+        }
+
+        [HttpPost("addProductItem")]
+        public async Task<ActionResult> AddProductItem([FromBody] AddProductItemCommand request, CancellationToken cancellationToken)
+        {
+            var productType = await _dbContext.ProductTypes.FirstOrDefaultAsync(x => x.Name == request.TypeName, cancellationToken);
+            var product = await _dbContext.Products.FirstOrDefaultAsync(x => x.Id == request.SelectedProductId, cancellationToken);
+            if (productType is not null && product is not null)
+            {
+                var item = new ProductItem
+                {
+                    QtyInStock = request.QtyInStock,
+                    Price = request.Price,
+                    Size = request.Size,
+                    ProductId = product.Id,
+                    ProductTypeId = productType.Id
+                };
+
+                await _dbContext.AddAsync(item, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
                 return Ok(product);
             }

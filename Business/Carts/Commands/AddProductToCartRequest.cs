@@ -3,8 +3,7 @@
     public class AddProductToCartRequest
     {
         public Guid UserId { get; set; }
-        public int ProductId { get; set; }
-
+        public int ProductItemId { get; set; }
         public int Quantity { get; set; }
     }
 }

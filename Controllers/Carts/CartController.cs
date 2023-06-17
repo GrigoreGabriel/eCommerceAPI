@@ -1,5 +1,9 @@
-﻿using eCommerceAPI.Data;
+﻿using eCommerceAPI.Business.Carts.Commands;
+using eCommerceAPI.Data;
+using eCommerceAPI.Data.ShoppingCartItems;
+using eCommerceAPI.Data.ShoppingCarts;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace eCommerceAPI.Controllers.Carts
 {
@@ -28,42 +32,61 @@ namespace eCommerceAPI.Controllers.Carts
             return "value";
         }
 
-        //POST api/<CartController>
-        //[HttpPost("productToCart")]
-        //public async Task<IActionResult> AddProductToCart([FromBody] AddProductToCartRequest request, CancellationToken cancellationToken)
-        //{
-        //    var productItem = await _dbContext.ProductItems.Include(x => x.Product).Where(x => x.ProductId == request.ProductId).FirstOrDefaultAsync(cancellationToken);
-        //    //var product = await _dbContext.Products.Where(x => x.Id == request.ProductId).Include(x => x.ProductItems).FirstOrDefaultAsync(cancellationToken);
-        //    //if (product == null)
-        //    //{
-        //    //    return NotFound("Product not found");
-        //    //}
-        //    //var isCart = await _dbContext.ShoppingCarts.AnyAsync(x => x.UserId == request.UserId, cancellationToken);
+        [HttpPost("productToCart")]
+        public async Task<IActionResult> AddProductToCart([FromBody] AddProductToCartRequest request, CancellationToken cancellationToken)
+        {
 
-        //    //if (isCart)
-        //    //{
-        //    var cart = await _dbContext.ShoppingCarts.Where(x => x.UserId == request.UserId).FirstOrDefaultAsync(cancellationToken)
-        //        ?? new ShoppingCart
-        //        {
-        //            Id = 1,
-        //            UserId = request.UserId
-        //        };
+            var productItem = await _dbContext.ProductItems.FirstOrDefaultAsync(x => x.Id == request.ProductItemId, cancellationToken);
+            var cart = await _dbContext.ShoppingCarts.FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+            if (cart is null)
+            {
+                var newShoppingCart = new ShoppingCart
+                {
+                    UserId = request.UserId,
+                };
+                newShoppingCart.ShoppingCartItems = new List<ShoppingCartItem>
+                {
+                    new ShoppingCartItem
+                    {
+                        ProductItemId = request.ProductItemId,
+                        Quantity=request.Quantity != 0 ? request.Quantity : 1,
 
-        //    var shoppingCartItem = new ShoppingCartItem
-        //    {
-        //        Id = 1,
-        //        Quantity = 1,
-        //        ProductItemId = productItem.Id,
-        //    };
+                    }
+                };
+                await _dbContext.AddAsync(newShoppingCart, cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return Ok("Created cart and added product with specified quantity");
+            }
+            if (cart is not null)
+            {
 
-        //    //_dbContext.ShoppingCartItems.Add(shoppingCartItem);
-        //    cart.ShoppingCartItems ?? cart.ShoppingCartItems.Add(shoppingCartItem);
+                if (cart.ShoppingCartItems.Any(x => x.ProductItemId == request.ProductItemId))
+                {
+                    cart.ShoppingCartItems.FirstOrDefault(x => x.ProductItemId == request.ProductItemId).Quantity += request.Quantity;
 
-        //    await _dbContext.AddAsync(cart, cancellationToken);
-        //    await _dbContext.SaveChangesAsync(cancellationToken);
+                    await _dbContext.AddAsync(cart, cancellationToken);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    return Ok("Item already exists in cart, only increased quantity");
 
-        //    return Ok(cart);
-        //}
+                }
+                else
+                {
+                    cart.ShoppingCartItems.Add(
+
+                        new ShoppingCartItem
+                        {
+                            ProductItemId = request.ProductItemId,
+                            Quantity = request.Quantity != 0 ? request.Quantity : 1,
+                        });
+
+                    await _dbContext.AddAsync(cart, cancellationToken);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    return Ok("Cart exists but product does not, added product with specified quantity");
+                }
+
+            }
+            return Ok(cart);
+        }
 
         // PUT api/<CartController>/5
         [HttpPut("{id}")]
