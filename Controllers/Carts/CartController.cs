@@ -60,26 +60,25 @@ namespace eCommerceAPI.Controllers.Carts
             }
             if (cart is not null)
             {
-
-                if (cart.ShoppingCartItems.Any(x => x.ProductItemId == request.ProductItemId))
+                var isCart = await _dbContext.ShoppingCartItems.AnyAsync(x => x.ProductItemId == request.ProductItemId, cancellationToken);
+                if (isCart)
                 {
-                    var item = cart.ShoppingCartItems.FirstOrDefault(x => x.ProductItemId == request.ProductItemId).Quantity += request.Quantity;
-                    await _dbContext.AddAsync(cart, cancellationToken);
+                    var item = await _dbContext.ShoppingCartItems.FirstOrDefaultAsync(x => x.ProductItemId == request.ProductItemId, cancellationToken);
+                    item.Quantity += request.Quantity;
                     await _dbContext.SaveChangesAsync(cancellationToken);
                     return Ok("Item already exists in cart, only increased quantity");
 
                 }
                 else
                 {
-                    cart.ShoppingCartItems.Add(
+                    var newItemEntry = new ShoppingCartItem
+                    {
+                        ProductItemId = request.ProductItemId,
+                        Quantity = request.Quantity != 0 ? request.Quantity : 1,
+                        ShoppingCartId = cart.Id
+                    };
 
-                        new ShoppingCartItem
-                        {
-                            ProductItemId = request.ProductItemId,
-                            Quantity = request.Quantity != 0 ? request.Quantity : 1,
-                        });
-
-                    await _dbContext.AddAsync(cart, cancellationToken);
+                    await _dbContext.AddAsync(newItemEntry, cancellationToken);
                     await _dbContext.SaveChangesAsync(cancellationToken);
                     return Ok("Cart exists but product does not, added product with specified quantity");
                 }
@@ -110,6 +109,19 @@ namespace eCommerceAPI.Controllers.Carts
                 .ToListAsync(cancellationToken);
             return items;
         }
+        [HttpGet("numberOfItemsInCart")]
+        public async Task<int> GetProductSizes([FromQuery] Guid userId, CancellationToken cancellationToken)
+        {
+            var cart = await _dbContext.ShoppingCarts.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+            if (cart is null)
+            {
+                return 0;
+            }
+            var numberOfItems = await _dbContext.ShoppingCartItems.Where(x => x.ShoppingCartId == cart.Id).CountAsync(cancellationToken);
+            return numberOfItems;
+
+        }
+
         // PUT api/<CartController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
