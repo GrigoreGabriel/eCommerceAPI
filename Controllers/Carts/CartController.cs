@@ -100,6 +100,7 @@ namespace eCommerceAPI.Controllers.Carts
                     .ThenInclude(x => x.Product)
                     .Select(x => new GetCartContentsResponse
                     {
+                        Id = x.Id,
                         ProductImageUrl = x.ProductItem.Product.Image_Url,
                         ProductName = $"{x.ProductItem.Product.Brand} {x.ProductItem.Product.Name}",
                         ProductItemType = x.ProductItem.ProductType.Name,
@@ -120,6 +121,19 @@ namespace eCommerceAPI.Controllers.Carts
             var numberOfItems = await _dbContext.ShoppingCartItems.Where(x => x.ShoppingCartId == cart.Id).CountAsync(cancellationToken);
             return numberOfItems;
 
+        }
+        [HttpDelete("removeProductFromCart")]
+        public async Task<IActionResult> RemoveProductFromFavorites([FromQuery] Guid userId, int shoppingCartItemId, CancellationToken cancellationToken)
+        {
+            var cart = await _dbContext.ShoppingCarts.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+            if (cart is null)
+            {
+                return NotFound("Cart is empty or does not exist");
+            }
+            var product = await _dbContext.ShoppingCartItems.Where(x => x.ShoppingCartId == cart.Id).FirstOrDefaultAsync(x => x.Id == shoppingCartItemId, cancellationToken);
+            _dbContext.ShoppingCartItems.Remove(product);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Ok(200);
         }
 
         // PUT api/<CartController>/5

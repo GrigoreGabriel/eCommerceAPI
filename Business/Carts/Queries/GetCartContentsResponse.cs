@@ -2,7 +2,7 @@
 {
     public class GetCartContentsResponse
     {
-
+        public int Id { get; set; }
         public string ProductImageUrl { get; set; }
         public string ProductName { get; set; }
         public string ProductItemType { get; set; }
