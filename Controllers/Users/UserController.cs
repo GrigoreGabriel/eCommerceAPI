@@ -186,7 +186,7 @@ namespace eCommerceAPI.Controllers.Users
         [HttpPost("addFavorite")]
         public async Task<IActionResult> AddUserFavorite([FromQuery] Guid userId, int productId, CancellationToken cancellationToken)
         {
-            var user = _dbContext.Users.FirstOrDefault(x => x.Id == userId);
+            var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId, cancellationToken);
 
             if (user == null)
             {
@@ -213,7 +213,7 @@ namespace eCommerceAPI.Controllers.Users
             };
             await _dbContext.AddAsync(favorite, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return Ok("Product added successfully");
+            return Ok(200);
         }
 
         [HttpDelete("removeFavorite")]
@@ -228,7 +228,7 @@ namespace eCommerceAPI.Controllers.Users
 
             _dbContext.Favorites.Remove(product);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return Ok($"Removed product from list of favorites");
+            return Ok(200);
         }
     }
 }

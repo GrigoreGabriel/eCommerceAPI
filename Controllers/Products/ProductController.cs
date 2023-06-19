@@ -92,15 +92,7 @@ namespace eCommerceAPI.Controllers.Products
                 Name = x.Name,
                 Brand = x.Brand,
                 Gender = x.Gender,
-                DetailsResponse = x.ProductItems.Select(x => new GetProductDetailResponse
-                {
-                    Id = x.Id,
-                    Size = x.Size,
-                    QtyInStock = x.QtyInStock,
-                    Price = x.Price,
-
-                }).ToList(),
-
+                NoOfConfigs = x.ProductItems.Count,
             }).ToListAsync(cancellationToken);
             return list;
 
