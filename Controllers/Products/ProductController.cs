@@ -9,6 +9,7 @@ using eCommerceAPI.Business.Products.Queries.GetProductShortDetails;
 using eCommerceAPI.Business.Products.Queries.GetProductSizes;
 using eCommerceAPI.Business.Products.Queries.GetProductStock;
 using eCommerceAPI.Business.Products.Queries.GetProductTypes;
+using eCommerceAPI.Business.Products.Queries.GetSuppliers;
 using eCommerceAPI.Data;
 using eCommerceAPI.Data.ProductItems;
 using eCommerceAPI.Data.Products;
@@ -101,12 +102,14 @@ namespace eCommerceAPI.Controllers.Products
         [HttpGet("itemsInStock")]
         public async Task<List<GetProductStockResponse>> GetProductStock(CancellationToken cancellationToken)
         {
-            var list = await _dbContext.ProductItems.AsNoTracking().Include(x => x.Product).Include(x => x.ProductType).Select(x => new GetProductStockResponse
+            var list = await _dbContext.ProductItems.AsNoTracking().Include(x => x.Product).Include(x => x.ProductType).Include(x => x.Supplier).Select(x => new GetProductStockResponse
             {
                 Brand = x.Product.Brand,
                 Name = x.Product.Name,
                 Type = x.ProductType.Name,
                 QtyInStock = x.QtyInStock,
+                PurchasePrice = x.PurchasePrice,
+                Supplier = x.Supplier.Name,
                 Price = x.Price,
                 Size = x.Size,
             }).ToListAsync(cancellationToken);
@@ -181,6 +184,19 @@ namespace eCommerceAPI.Controllers.Products
             }
             return new GetProductPriceResponse { Price = 0 };
         }
+        [HttpGet("getSuppliers")]
+        public async Task<List<GetSuppliersResponse>> GetSuppliers(CancellationToken cancellationToken)
+        {
+            var suppliers = await _dbContext.Suppliers.Select(x => new GetSuppliersResponse
+            {
+                Id = x.Id,
+                Name = x.Name,
+                PersonOfContact = x.PersonOfContact,
+                PhoneNumber = x.PhoneNumber,
+                RegistrationNumber = x.RegistrationNumber,
+            }).ToListAsync(cancellationToken);
+            return suppliers;
+        }
 
         [HttpPost("addProduct")]
         public async Task<ActionResult> AddProduct([FromBody] AddProductCommand request, CancellationToken cancellationToken)
@@ -210,16 +226,19 @@ namespace eCommerceAPI.Controllers.Products
         public async Task<ActionResult> AddProductItem([FromBody] AddProductItemCommand request, CancellationToken cancellationToken)
         {
             var productType = await _dbContext.ProductTypes.FirstOrDefaultAsync(x => x.Name == request.TypeName, cancellationToken);
+            var supplier = await _dbContext.Suppliers.FirstOrDefaultAsync(x => x.Name == request.SupplierName, cancellationToken);
             var product = await _dbContext.Products.FirstOrDefaultAsync(x => x.Id == request.SelectedProductId, cancellationToken);
-            if (productType is not null && product is not null)
+            if (productType is not null && product is not null && supplier is not null)
             {
                 var item = new ProductItem
                 {
                     QtyInStock = request.QtyInStock,
+                    PurchasePrice = request.PurchasePrice,
                     Price = request.Price,
                     Size = request.Size,
                     ProductId = product.Id,
-                    ProductTypeId = productType.Id
+                    ProductTypeId = productType.Id,
+                    SupplierId = supplier.Id,
                 };
 
                 await _dbContext.AddAsync(item, cancellationToken);
@@ -228,22 +247,6 @@ namespace eCommerceAPI.Controllers.Products
             }
             return BadRequest();
         }
-        // POST api/<ProductController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
 
-        // PUT api/<ProductController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<ProductController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
     }
 }

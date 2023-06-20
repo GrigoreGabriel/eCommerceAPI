@@ -56,6 +56,7 @@ namespace eCommerceAPI.Controllers.Users
                 Region = x.Address.Region,
                 AddressLine = x.Address.AddressLine,
                 PostalCode = x.Address.PostalCode,
+                Country = x.Address.Country
 
             }).FirstOrDefaultAsync(cancellationToken);
             return foundUser;

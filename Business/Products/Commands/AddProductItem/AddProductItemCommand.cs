@@ -3,9 +3,11 @@
     public class AddProductItemCommand
     {
         public int SelectedProductId { get; set; }
+        public int PurchasePrice { get; set; }
         public int Price { get; set; }
         public string Size { get; set; }
         public string TypeName { get; set; }
+        public string SupplierName { get; set; }
         public int QtyInStock { get; set; }
 
     }

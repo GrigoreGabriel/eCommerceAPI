@@ -8,6 +8,6 @@
         public string Region { get; set; }
         public string AddressLine { get; set; }
         public string PostalCode { get; set; }
-        //public string Country { get; set; }
+        public string Country { get; set; }
     }
 }

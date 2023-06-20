@@ -9,6 +9,7 @@ using eCommerceAPI.Data.Products;
 using eCommerceAPI.Data.ProductTypes;
 using eCommerceAPI.Data.ShoppingCartItems;
 using eCommerceAPI.Data.ShoppingCarts;
+using eCommerceAPI.Data.Suppliers;
 using eCommerceAPI.Data.UserPaymentTypes;
 using eCommerceAPI.Data.Users;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ namespace eCommerceAPI.Data
         public DbSet<OrderDetail> OrderDetails { get; set; }
         public DbSet<ProductType> ProductTypes { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
+        public DbSet<Supplier> Suppliers { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

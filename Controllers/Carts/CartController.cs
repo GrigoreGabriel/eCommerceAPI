@@ -145,12 +145,16 @@ namespace eCommerceAPI.Controllers.Carts
                 return 0;
             }
             var cartItems = await _dbContext.ShoppingCartItems.Where(x => x.ShoppingCartId == cart.Id).Include(x => x.ProductItem).ToListAsync(cancellationToken);
-            var totalValue = 0;
-            foreach (var item in cartItems)
+            if (cartItems.Any())
             {
-                totalValue += item.Quantity * item.ProductItem.Price;
+                var totalValue = 0;
+                foreach (var item in cartItems)
+                {
+                    totalValue += item.Quantity * item.ProductItem.Price;
+                }
+                return totalValue;
             }
-            return totalValue;
+            return 0;
 
         }
     }
