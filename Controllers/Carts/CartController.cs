@@ -135,17 +135,23 @@ namespace eCommerceAPI.Controllers.Carts
             await _dbContext.SaveChangesAsync(cancellationToken);
             return Ok(200);
         }
-
-        // PUT api/<CartController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpGet("cartTotalValue")]
+        public async Task<int> GetCartTotalValue([FromQuery] Guid userId, CancellationToken cancellationToken)
         {
-        }
 
-        // DELETE api/<CartController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            var cart = await _dbContext.ShoppingCarts.FirstOrDefaultAsync(x => x.UserId == userId, cancellationToken);
+            if (cart is null)
+            {
+                return 0;
+            }
+            var cartItems = await _dbContext.ShoppingCartItems.Where(x => x.ShoppingCartId == cart.Id).Include(x => x.ProductItem).ToListAsync(cancellationToken);
+            var totalValue = 0;
+            foreach (var item in cartItems)
+            {
+                totalValue += item.Quantity * item.ProductItem.Price;
+            }
+            return totalValue;
+
         }
     }
 }
