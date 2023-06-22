@@ -89,10 +89,13 @@ namespace eCommerceAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("OrderId")
+                    b.Property<int>("ItemsTotalValue")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ProductItemId")
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
@@ -102,18 +105,16 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductItemId");
 
                     b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Orders.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AddressId")
                         .HasColumnType("int");
@@ -465,15 +466,15 @@ namespace eCommerceAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("eCommerceAPI.Data.Products.Product", "Product")
+                    b.HasOne("eCommerceAPI.Data.ProductItems.ProductItem", "ProductItem")
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("ProductItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Order");
 
-                    b.Navigation("Product");
+                    b.Navigation("ProductItem");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Orders.Order", b =>

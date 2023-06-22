@@ -229,7 +229,6 @@ namespace eCommerceAPI.Controllers.Products
             }).ToListAsync(cancellationToken);
             return suppliers;
         }
-
         [HttpGet("getSupplierStock")]
         public async Task<List<GetSupplierStockHeaderResponse>> GetSupplierStock(CancellationToken cancellationToken)
         {

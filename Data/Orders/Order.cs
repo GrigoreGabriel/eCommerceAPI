@@ -6,7 +6,7 @@ namespace eCommerceAPI.Data.Orders
 {
     public class Order
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public Guid UserId { get; set; }
         public int AddressId { get; set; }
         public virtual User User { get; set; }

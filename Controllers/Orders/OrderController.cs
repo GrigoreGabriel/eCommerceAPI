@@ -1,5 +1,8 @@
-﻿using eCommerceAPI.Business.Orders.Queries.GetOrderByUserId;
+﻿using eCommerceAPI.Business.Orders.Commands.Checkout;
+using eCommerceAPI.Business.Orders.Queries.GetOrderByUserId;
 using eCommerceAPI.Data;
+using eCommerceAPI.Data.OrderDetails;
+using eCommerceAPI.Data.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,13 +19,6 @@ namespace eCommerceAPI.Controllers.Orders
         public OrderController(CommerceDbContext dbContext)
         {
             _dbContext = dbContext;
-        }
-
-        // GET: api/<OrderController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
         }
 
         [HttpGet("orders/{userId}")]
@@ -45,40 +41,40 @@ namespace eCommerceAPI.Controllers.Orders
 
             return list;
         }
-
-        //[HttpGet("order/products/{orderId}")]
-        //public async Task<List<GetOrderDetailByOrderIdResponse>> GetProductsFromOrder(int orderId, CancellationToken cancellationToken)
-        //{
-        //    var list = _dbContext.OrderDetails
-        //                .Include(x => x.Order).Where(x => x.Id == orderId)
-        //                    .ThenInclude(x => x.Product)
-        //                    .Select(x => new GetOrderDetailByOrderIdResponse
-        //                    {
-        //                        ProductName = x.OrderDetails.Select(x => x.Product.Name).FirstOrDefault(),
-        //                        Quantity = x.OrderDetails.Select(x => x.Quantity).FirstOrDefault(),
-        //                        Gender = x.OrderDetails.Select(x => x.Product.Gender).FirstOrDefault(),
-        //                    })
-        //                .ToListAsync(cancellationToken).Result;
-
-        //    return list;
-        //}
-
-        // POST api/<OrderController>
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPost("checkout")]
+        public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
         {
-        }
+            var user = await _dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
+            var cart = await _dbContext.ShoppingCarts.Include(x => x.ShoppingCartItems).ThenInclude(x => x.ProductItem).FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+            if (cart is null)
+            {
+                return NotFound();
+            }
+            var order = new Order
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                AddressId = user.Address.Id
+            };
+            order.OrderDetails = new List<OrderDetail>();
+            foreach (var item in cart.ShoppingCartItems)
+            {
+                order.OrderDetails.Add(new OrderDetail
+                {
+                    OrderId = order.Id,
+                    ProductItem = item.ProductItem,
+                    Quantity = item.Quantity,
+                    ItemsTotalValue = item.Quantity * item.ProductItem.Price
+                });
+                order.OrderTotal += item.Quantity * item.ProductItem.Price;
+            }
+            //shipping
+            order.OrderTotal += 5;
 
-        // PUT api/<OrderController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<OrderController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
+            await _dbContext.AddAsync(order, cancellationToken);
+            _dbContext.ShoppingCarts.Remove(cart);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Ok("order confirmed");
         }
     }
 }

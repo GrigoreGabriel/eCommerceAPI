@@ -19,20 +19,6 @@ namespace eCommerceAPI.Controllers.Carts
             _dbContext = dbContext;
         }
 
-        // GET: api/<CartController>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new string[] { "value1", "value2" };
-        }
-
-        // GET api/<CartController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
-
         [HttpPost("productToCart")]
         public async Task<IActionResult> AddProductToCart([FromBody] AddProductToCartRequest request, CancellationToken cancellationToken)
         {

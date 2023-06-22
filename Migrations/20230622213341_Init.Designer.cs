@@ -12,8 +12,8 @@ using eCommerceAPI.Data;
 namespace eCommerceAPI.Migrations
 {
     [DbContext(typeof(CommerceDbContext))]
-    [Migration("20230525211901_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20230622213341_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -37,6 +37,14 @@ namespace eCommerceAPI.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -83,10 +91,13 @@ namespace eCommerceAPI.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("OrderId")
+                    b.Property<int>("ItemsTotalValue")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ProductItemId")
                         .HasColumnType("int");
 
                     b.Property<int>("Quantity")
@@ -96,18 +107,16 @@ namespace eCommerceAPI.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductItemId");
 
                     b.ToTable("OrderDetails");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Orders.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AddressId")
                         .HasColumnType("int");
@@ -175,12 +184,29 @@ namespace eCommerceAPI.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<int>("ProductTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PurchasePrice")
+                        .HasColumnType("int");
+
                     b.Property<int>("QtyInStock")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Size")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SupplierId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ProductId");
+
+                    b.HasIndex("ProductTypeId");
+
+                    b.HasIndex("SupplierId");
 
                     b.ToTable("ProductItems");
                 });
@@ -192,6 +218,10 @@ namespace eCommerceAPI.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Brand")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -212,15 +242,45 @@ namespace eCommerceAPI.Migrations
                     b.Property<int>("ProductCategoryId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Size")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ProductCategoryId");
 
                     b.ToTable("Products");
+                });
+
+            modelBuilder.Entity("eCommerceAPI.Data.ProductTypes.ProductType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ProductTypes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Perfume"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Eau de perfume"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Eau de toilette"
+                        });
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.ShoppingCartItems.ShoppingCartItem", b =>
@@ -237,7 +297,7 @@ namespace eCommerceAPI.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ShoppingCartId")
+                    b.Property<int>("ShoppingCartId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -265,6 +325,35 @@ namespace eCommerceAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ShoppingCarts");
+                });
+
+            modelBuilder.Entity("eCommerceAPI.Data.Suppliers.Supplier", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PersonOfContact")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RegistrationNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Suppliers");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.UserPaymentTypes.UserPaymentMethod", b =>
@@ -315,6 +404,9 @@ namespace eCommerceAPI.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -376,15 +468,15 @@ namespace eCommerceAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("eCommerceAPI.Data.Products.Product", "Product")
+                    b.HasOne("eCommerceAPI.Data.ProductItems.ProductItem", "ProductItem")
                         .WithMany()
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("ProductItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Order");
 
-                    b.Navigation("Product");
+                    b.Navigation("ProductItem");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Orders.Order", b =>
@@ -414,7 +506,23 @@ namespace eCommerceAPI.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("eCommerceAPI.Data.ProductTypes.ProductType", "ProductType")
+                        .WithMany("ProductItems")
+                        .HasForeignKey("ProductTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("eCommerceAPI.Data.Suppliers.Supplier", "Supplier")
+                        .WithMany("ProductItems")
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Product");
+
+                    b.Navigation("ProductType");
+
+                    b.Navigation("Supplier");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Products.Product", b =>
@@ -438,7 +546,9 @@ namespace eCommerceAPI.Migrations
 
                     b.HasOne("eCommerceAPI.Data.ShoppingCarts.ShoppingCart", null)
                         .WithMany("ShoppingCartItems")
-                        .HasForeignKey("ShoppingCartId");
+                        .HasForeignKey("ShoppingCartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ProductItem");
                 });
@@ -503,9 +613,19 @@ namespace eCommerceAPI.Migrations
                     b.Navigation("ProductItems");
                 });
 
+            modelBuilder.Entity("eCommerceAPI.Data.ProductTypes.ProductType", b =>
+                {
+                    b.Navigation("ProductItems");
+                });
+
             modelBuilder.Entity("eCommerceAPI.Data.ShoppingCarts.ShoppingCart", b =>
                 {
                     b.Navigation("ShoppingCartItems");
+                });
+
+            modelBuilder.Entity("eCommerceAPI.Data.Suppliers.Supplier", b =>
+                {
+                    b.Navigation("ProductItems");
                 });
 
             modelBuilder.Entity("eCommerceAPI.Data.Users.User", b =>
