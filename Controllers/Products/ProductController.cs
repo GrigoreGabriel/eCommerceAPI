@@ -1,18 +1,23 @@
 ﻿using eCommerceAPI.Business.Products.Commands.AddProduct;
 using eCommerceAPI.Business.Products.Commands.AddProductItem;
+using eCommerceAPI.Business.Products.Commands.AddSupplier;
 using eCommerceAPI.Business.Products.Queries.GetAll;
 using eCommerceAPI.Business.Products.Queries.GetById;
+using eCommerceAPI.Business.Products.Queries.GetProductBrands;
 using eCommerceAPI.Business.Products.Queries.GetProductCategories;
 using eCommerceAPI.Business.Products.Queries.GetProductDetails;
+using eCommerceAPI.Business.Products.Queries.GetProductItemSize;
 using eCommerceAPI.Business.Products.Queries.GetProductPrice;
 using eCommerceAPI.Business.Products.Queries.GetProductShortDetails;
 using eCommerceAPI.Business.Products.Queries.GetProductSizes;
 using eCommerceAPI.Business.Products.Queries.GetProductStock;
 using eCommerceAPI.Business.Products.Queries.GetProductTypes;
 using eCommerceAPI.Business.Products.Queries.GetSuppliers;
+using eCommerceAPI.Business.Products.Queries.GetSupplierStock;
 using eCommerceAPI.Data;
 using eCommerceAPI.Data.ProductItems;
 using eCommerceAPI.Data.Products;
+using eCommerceAPI.Data.Suppliers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -151,6 +156,15 @@ namespace eCommerceAPI.Controllers.Products
             }).ToListAsync(cancellationToken);
             return productTypes;
         }
+        [HttpGet("productBrands")]
+        public async Task<List<GetProductBrandsResponse>> GetProductBrands(CancellationToken cancellationToken)
+        {
+            var productBrands = await _dbContext.Products.AsNoTracking().Select(x => new GetProductBrandsResponse
+            {
+                Name = x.Brand,
+            }).Distinct().ToListAsync(cancellationToken);
+            return productBrands;
+        }
 
         [HttpGet("productConfigurations")]
         public async Task<List<GetProductSizesResponse>> GetProductSizes([FromQuery] int productId, CancellationToken cancellationToken)
@@ -184,6 +198,15 @@ namespace eCommerceAPI.Controllers.Products
             }
             return new GetProductPriceResponse { Price = 0 };
         }
+        [HttpGet("productSizes")]
+        public async Task<List<GetProductItemSizeResponse>> GetProductSizes(CancellationToken cancellationToken)
+        {
+            var suppliers = await _dbContext.ProductItems.Select(x => new GetProductItemSizeResponse
+            {
+                Size = x.Size
+            }).Distinct().ToListAsync(cancellationToken);
+            return suppliers;
+        }
         [HttpGet("getSuppliers")]
         public async Task<List<GetSuppliersResponse>> GetSuppliers(CancellationToken cancellationToken)
         {
@@ -195,6 +218,33 @@ namespace eCommerceAPI.Controllers.Products
                 PhoneNumber = x.PhoneNumber,
                 RegistrationNumber = x.RegistrationNumber,
             }).ToListAsync(cancellationToken);
+            return suppliers;
+        }
+        [HttpGet("supplierNames")]
+        public async Task<List<GetSupplierNameResponse>> GetSupplierNames(CancellationToken cancellationToken)
+        {
+            var suppliers = await _dbContext.Suppliers.Select(x => new GetSupplierNameResponse
+            {
+                Name = x.Name
+            }).ToListAsync(cancellationToken);
+            return suppliers;
+        }
+
+        [HttpGet("getSupplierStock")]
+        public async Task<List<GetSupplierStockHeaderResponse>> GetSupplierStock(CancellationToken cancellationToken)
+        {
+            var suppliers = await _dbContext.Suppliers
+                .Include(x => x.ProductItems)
+                    .ThenInclude(x => x.Product)
+                    .Select(x => new GetSupplierStockHeaderResponse
+                    {
+                        Id = x.Id,
+                        Name = x.Name,
+                        PersonOfContact = x.PersonOfContact,
+                        PhoneNumber = x.PhoneNumber,
+                        RegistrationNumber = x.RegistrationNumber
+                    }).ToListAsync(cancellationToken);
+
             return suppliers;
         }
 
@@ -246,6 +296,20 @@ namespace eCommerceAPI.Controllers.Products
                 return Ok(product);
             }
             return BadRequest();
+        }
+        [HttpPost("addSupplier")]
+        public async Task<ActionResult> AddSupplier([FromBody] AddSupplierCommand request, CancellationToken cancellationToken)
+        {
+            var supplier = new Supplier
+            {
+                Name = request.Name,
+                PersonOfContact = request.PersonOfContact,
+                PhoneNumber = request.PhoneNumber,
+                RegistrationNumber = request.RegistrationNumber
+            };
+            await _dbContext.AddAsync(supplier, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Ok(200);
         }
 
     }
