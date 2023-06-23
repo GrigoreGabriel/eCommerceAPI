@@ -1,5 +1,8 @@
 ﻿using eCommerceAPI.Business.Orders.Commands.Checkout;
-using eCommerceAPI.Business.Orders.Queries.GetOrderByUserId;
+using eCommerceAPI.Business.Orders.Queries.GetAllOrders;
+using eCommerceAPI.Business.Orders.Queries.GetOrderById;
+using eCommerceAPI.Business.Orders.Queries.GetUserDetailsByOrderId;
+using eCommerceAPI.Business.Orders.Queries.GetUsersOrders;
 using eCommerceAPI.Data;
 using eCommerceAPI.Data.OrderDetails;
 using eCommerceAPI.Data.Orders;
@@ -21,25 +24,84 @@ namespace eCommerceAPI.Controllers.Orders
             _dbContext = dbContext;
         }
 
-        [HttpGet("orders/{userId}")]
-        public async Task<List<GetOrderByUserIdResponse>> GetAllOrders(Guid userId, CancellationToken cancellationToken)
+        [HttpGet("ordersByUser")]
+        public async Task<List<GetUsersOrdersResponse>> GetAllOrders([FromQuery] Guid userId, CancellationToken cancellationToken)
         {
-            var list = _dbContext.Orders
-                .Include(x => x.User)
-                    .Where(x => x.User.Id == userId)
+            var usersOrders = await _dbContext.Orders
                 .Include(x => x.OrderDetails)
-                .Include(x => x.Address)
-                .Select(x => new GetOrderByUserIdResponse
+                .Include(x => x.User)
+                    .Where(x => x.UserId == userId)
+                .Select(x => new GetUsersOrdersResponse
                 {
                     Id = x.Id,
-                    UserName = x.User.Name,
-                    AdressName = x.Address.AddressLine,
-                    AdressPostalCode = x.Address.PostalCode,
-                    OrderTotal = x.OrderTotal
+                    OrderDate = x.OrderTime,
+                    TotalValue = x.OrderTotal
                 })
-                .ToListAsync(cancellationToken).Result;
+                .ToListAsync(cancellationToken);
 
-            return list;
+            return usersOrders;
+        }
+        [HttpGet("orderById")]
+        public async Task<List<GetOrderByIdResponse>> GetOrderById([FromQuery] Guid orderId, CancellationToken cancellationToken)
+        {
+            var usersOrders = await _dbContext.OrderDetails
+                .Where(x => x.OrderId == orderId)
+                .Include(x => x.ProductItem)
+                    .ThenInclude(x => x.Product)
+                .Include(x => x.ProductItem)
+                    .ThenInclude(x => x.ProductType)
+                .Select(x => new GetOrderByIdResponse
+                {
+                    Id = x.Order.Id,
+                    ProductName = x.ProductItem.Product.Name,
+                    OrderDate = x.Order.OrderTime,
+                    Quantity = x.Quantity,
+                    ImageUrl = x.ProductItem.Product.Image_Url,
+                    ProductType = x.ProductItem.ProductType.Name,
+                    TotalValue = x.ItemsTotalValue
+                })
+                .ToListAsync(cancellationToken);
+
+            return usersOrders;
+        }
+        [HttpGet("numberOfOrders")]
+        public async Task<int> GetNumberOfOrders(CancellationToken cancellationToken)
+        {
+            var numberOfOrders = await _dbContext.Orders.CountAsync(cancellationToken);
+
+            return numberOfOrders;
+        }
+        [HttpGet("totalOrdersValue")]
+        public async Task<int> GetOrdersTotalValue(CancellationToken cancellationToken)
+        {
+            var totalValue = 0;
+            var listOfOrders = await _dbContext.OrderDetails
+                .Include(x => x.ProductItem)
+                .ToListAsync(cancellationToken);
+            foreach (var item in listOfOrders)
+            {
+                totalValue += item.Quantity * item.ProductItem.Price;
+            }
+
+            return totalValue;
+        }
+        [HttpGet("userDetailsByOrderId")]
+        public async Task<List<GetUserDetailsByOrderIdResponse>> GetUserDetailByOrderId([FromQuery] Guid orderId, CancellationToken cancellationToken)
+        {
+            var usersOrders = await _dbContext.Orders.Where(x => x.Id == orderId)
+                    .Include(x => x.User)
+                        .ThenInclude(x => x.Address)
+                .Select(x => new GetUserDetailsByOrderIdResponse
+                {
+                    UserName = x.User.Name,
+                    UserAdressLine = x.User.Address.AddressLine,
+                    UserCity = x.User.Address.City,
+                    UserCountry = x.User.Address.Country,
+                    UserPhone = x.User.Address.PhoneNumber,
+                })
+                .ToListAsync(cancellationToken);
+
+            return usersOrders;
         }
         [HttpPost("checkout")]
         public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
@@ -54,7 +116,8 @@ namespace eCommerceAPI.Controllers.Orders
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
-                AddressId = user.Address.Id
+                AddressId = user.Address.Id,
+                OrderTime = DateTime.UtcNow,
             };
             order.OrderDetails = new List<OrderDetail>();
             foreach (var item in cart.ShoppingCartItems)
@@ -75,6 +138,26 @@ namespace eCommerceAPI.Controllers.Orders
             _dbContext.ShoppingCarts.Remove(cart);
             await _dbContext.SaveChangesAsync(cancellationToken);
             return Ok("order confirmed");
+        }
+        [HttpGet("allOrders")]
+        public async Task<List<GetAllOrdersResponse>> GetOrders(CancellationToken cancellationToken)
+        {
+            var orders = await _dbContext.Orders
+                .Include(x => x.OrderDetails)
+                .Include(x => x.User)
+                .ThenInclude(x => x.Address)
+                .Select(x => new GetAllOrdersResponse
+                {
+                    Id = x.Id,
+                    UserId = x.User.Id,
+                    Country = x.User.Address.Country,
+                    City = x.User.Address.City,
+                    PhoneNumber = x.User.Address.PhoneNumber,
+                    OrderDate = x.OrderTime,
+                    TotalValue = x.OrderTotal
+                })
+                .ToListAsync(cancellationToken);
+            return orders;
         }
     }
 }

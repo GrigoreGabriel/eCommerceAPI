@@ -13,5 +13,6 @@ namespace eCommerceAPI.Data.Orders
         public virtual Address Address { get; set; }
         public virtual ICollection<OrderDetail> OrderDetails { get; set; }
         public int OrderTotal { get; set; }
+        public DateTime OrderTime { get; set; }
     }
 }
