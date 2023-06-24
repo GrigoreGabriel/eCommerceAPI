@@ -90,14 +90,17 @@ namespace eCommerceAPI.Controllers.Users
             {
                 return NotFound("The user does not exist");
             }
-            var foundUserDetails = await _dbContext.Users.Where(x => x.Id == request.UserId).Include(x => x.Address).FirstOrDefaultAsync(cancellationToken);
-            foundUserDetails.Name = request.Name;
-            foundUserDetails.Email = request.Email;
-            foundUserDetails.Address.City = request.City;
-            foundUserDetails.Address.Region = request.Region;
-            foundUserDetails.Address.AddressLine = request.AddressLine;
-            foundUserDetails.Address.PostalCode = request.PostalCode;
+            var foundUserDetails = await _dbContext.Addresses.Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+            foundUserDetails.User.Name = request.UserName;
+            foundUserDetails.User.Email = request.UserEmail;
+            foundUserDetails.PhoneNumber = request.UserPhoneNumber;
+            foundUserDetails.City = request.City;
+            foundUserDetails.Country = request.Country;
+            foundUserDetails.Region = request.Region;
+            foundUserDetails.AddressLine = request.AddressLine;
+            foundUserDetails.PostalCode = request.PostalCode;
 
+            _dbContext.SaveChangesAsync(cancellationToken);
             return Ok("User details updated");
         }
 
