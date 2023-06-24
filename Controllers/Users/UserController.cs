@@ -56,6 +56,7 @@ namespace eCommerceAPI.Controllers.Users
                 Region = x.Address.Region,
                 AddressLine = x.Address.AddressLine,
                 PostalCode = x.Address.PostalCode,
+                PhoneNumber=x.Address.PhoneNumber,
                 Country = x.Address.Country
 
             }).FirstOrDefaultAsync(cancellationToken);
@@ -91,17 +92,15 @@ namespace eCommerceAPI.Controllers.Users
                 return NotFound("The user does not exist");
             }
             var foundUserDetails = await _dbContext.Addresses.Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
-            foundUserDetails.User.Name = request.UserName;
-            foundUserDetails.User.Email = request.UserEmail;
-            foundUserDetails.PhoneNumber = request.UserPhoneNumber;
-            foundUserDetails.City = request.City;
-            foundUserDetails.Country = request.Country;
-            foundUserDetails.Region = request.Region;
-            foundUserDetails.AddressLine = request.AddressLine;
-            foundUserDetails.PostalCode = request.PostalCode;
+            foundUserDetails.PhoneNumber = request.UserPhoneNumber ?? foundUserDetails.PhoneNumber ?? string.Empty;
+            foundUserDetails.City = request.City ?? foundUserDetails.City ?? string.Empty;
+            foundUserDetails.Country = request.Country ?? foundUserDetails.Country ?? string.Empty;
+            foundUserDetails.Region = request.Region ?? foundUserDetails.Region ?? string.Empty;
+            foundUserDetails.AddressLine = request.AddressLine ?? foundUserDetails.AddressLine ?? string.Empty;
+            foundUserDetails.PostalCode = request.PostalCode ?? foundUserDetails.PostalCode ?? string.Empty;
 
-            _dbContext.SaveChangesAsync(cancellationToken);
-            return Ok("User details updated");
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return Ok(200);
         }
 
         [HttpGet("{id}")]

@@ -9,8 +9,6 @@ using eCommerceAPI.Data.Orders;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-
 namespace eCommerceAPI.Controllers.Orders
 {
     [Route("api/order")]
@@ -140,6 +138,7 @@ namespace eCommerceAPI.Controllers.Orders
         public async Task<List<GetAllOrdersResponse>> GetOrders(CancellationToken cancellationToken)
         {
             var orders = await _dbContext.Orders
+                .OrderByDescending(x=>x.OrderTime)
                 .Include(x => x.OrderDetails)
                 .Include(x => x.User)
                 .ThenInclude(x => x.Address)

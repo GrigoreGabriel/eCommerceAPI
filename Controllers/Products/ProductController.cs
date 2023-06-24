@@ -81,6 +81,7 @@ namespace eCommerceAPI.Controllers.Products
                     Name = x.Name,
                     Description = x.Description,
                     ProductCategory = x.ProductCategory.Name,
+                    Brand=x.Brand,
                     Image_Url = x.Image_Url,
                     Price = x.ProductItems.Select(x => x.Price).FirstOrDefault()
 
