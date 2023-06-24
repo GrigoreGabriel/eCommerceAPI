@@ -104,19 +104,16 @@ namespace eCommerceAPI.Controllers.Orders
             return usersOrders;
         }
         [HttpPost("checkout")]
-        public async Task<IActionResult> Checkout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
+        public async Task<Guid> Checkout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
         {
             var user = await _dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
             var cart = await _dbContext.ShoppingCarts.Include(x => x.ShoppingCartItems).ThenInclude(x => x.ProductItem).FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
-            if (cart is null)
-            {
-                return NotFound();
-            }
             var order = new Order
             {
                 Id = Guid.NewGuid(),
                 UserId = user.Id,
                 AddressId = user.Address.Id,
+                IsShipped = false,
                 OrderTime = DateTime.UtcNow,
             };
             order.OrderDetails = new List<OrderDetail>();
@@ -137,7 +134,7 @@ namespace eCommerceAPI.Controllers.Orders
             await _dbContext.AddAsync(order, cancellationToken);
             _dbContext.ShoppingCarts.Remove(cart);
             await _dbContext.SaveChangesAsync(cancellationToken);
-            return Ok("order confirmed");
+            return order.Id;
         }
         [HttpGet("allOrders")]
         public async Task<List<GetAllOrdersResponse>> GetOrders(CancellationToken cancellationToken)
@@ -154,6 +151,7 @@ namespace eCommerceAPI.Controllers.Orders
                     City = x.User.Address.City,
                     PhoneNumber = x.User.Address.PhoneNumber,
                     OrderDate = x.OrderTime,
+                    IsShipped=x.IsShipped,
                     TotalValue = x.OrderTotal
                 })
                 .ToListAsync(cancellationToken);

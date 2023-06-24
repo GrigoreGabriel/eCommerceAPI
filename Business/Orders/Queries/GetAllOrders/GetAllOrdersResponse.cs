@@ -8,6 +8,7 @@
         public string Country { get; set; }
         public string City { get; set; }
         public string PhoneNumber { get; set; }
+        public bool IsShipped { get;set; }
         public int TotalValue { get; set; }
     }
 }
