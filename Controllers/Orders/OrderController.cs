@@ -1,6 +1,7 @@
 ﻿using eCommerceAPI.Business.Orders.Commands.Checkout;
 using eCommerceAPI.Business.Orders.Queries.GetAllOrders;
 using eCommerceAPI.Business.Orders.Queries.GetOrderById;
+using eCommerceAPI.Business.Orders.Queries.GetOrdersByUserId;
 using eCommerceAPI.Business.Orders.Queries.GetUserDetailsByOrderId;
 using eCommerceAPI.Business.Orders.Queries.GetUsersOrders;
 using eCommerceAPI.Data;
@@ -22,23 +23,23 @@ namespace eCommerceAPI.Controllers.Orders
             _dbContext = dbContext;
         }
 
-        [HttpGet("ordersByUser")]
-        public async Task<List<GetUsersOrdersResponse>> GetAllOrders([FromQuery] Guid userId, CancellationToken cancellationToken)
-        {
-            var usersOrders = await _dbContext.Orders
-                .Include(x => x.OrderDetails)
-                .Include(x => x.User)
-                    .Where(x => x.UserId == userId)
-                .Select(x => new GetUsersOrdersResponse
-                {
-                    Id = x.Id,
-                    OrderDate = x.OrderTime,
-                    TotalValue = x.OrderTotal
-                })
-                .ToListAsync(cancellationToken);
+        //[HttpGet("ordersByUser")]
+        //public async Task<List<GetUsersOrdersResponse>> GetAllOrders([FromQuery] Guid userId, CancellationToken cancellationToken)
+        //{
+        //    var usersOrders = await _dbContext.Orders
+        //        .Include(x => x.OrderDetails)
+        //        .Include(x => x.User)
+        //            .Where(x => x.UserId == userId)
+        //        .Select(x => new GetUsersOrdersResponse
+        //        {
+        //            Id = x.Id,
+        //            OrderDate = x.OrderTime,
+        //            TotalValue = x.OrderTotal
+        //        })
+        //        .ToListAsync(cancellationToken);
 
-            return usersOrders;
-        }
+        //    return usersOrders;
+        //}
         [HttpGet("orderById")]
         public async Task<List<GetOrderByIdResponse>> GetOrderById([FromQuery] Guid orderId, CancellationToken cancellationToken)
         {
@@ -78,7 +79,7 @@ namespace eCommerceAPI.Controllers.Orders
                 .ToListAsync(cancellationToken);
             foreach (var item in listOfOrders)
             {
-                totalValue += item.Quantity * item.ProductItem.Price;
+                totalValue += item.ItemsTotalValue;
             }
 
             return totalValue;
@@ -155,6 +156,56 @@ namespace eCommerceAPI.Controllers.Orders
                 })
                 .ToListAsync(cancellationToken);
             return orders;
+        }
+        [HttpGet("userOrdersById")]
+        public async Task<List<GetOrdersByUserId>> GetOrdersByUserId([FromQuery] Guid userId,CancellationToken cancellationToken)
+        {
+            var orders = await _dbContext.Orders
+                .OrderByDescending(x => x.OrderTime)
+                .Include(x => x.OrderDetails)
+                .Include(x => x.User)
+                    .Where(x=>x.UserId == userId)
+                .Include(x=>x.User)
+                .ThenInclude(x => x.Address)
+                .Select(x => new GetOrdersByUserId
+                {
+                    Id = x.Id,
+                    OrderDate = x.OrderTime,
+                    IsShipped = x.IsShipped,
+                    TotalValue = x.OrderTotal
+                })
+                .ToListAsync(cancellationToken);
+            return orders;
+        }
+        [HttpGet("mostOrderedItem")]
+        public async Task<IActionResult> GetMostOrderedProductItem(CancellationToken cancellationToken)
+        {
+            var orders= await _dbContext.OrderDetails
+                .Include(x=>x.ProductItem)
+                    .ThenInclude(x=>x.Product)
+                .Include(x => x.ProductItem)
+                    .ThenInclude(x=>x.ProductType)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            var mostOrderedProduct = orders
+            .GroupBy(o => o.ProductItemId)
+            .OrderByDescending(g => g.Sum(o => o.Quantity))
+            .FirstOrDefault()
+            .Select(x => $"{x.ProductItem.Product.Brand} {x.ProductItem.Product.Name} {x.ProductItem.ProductType.Name} {x.ProductItem.Size}")
+            .Distinct();
+            if(mostOrderedProduct == null)
+            {
+                return NoContent();
+            }
+
+            return Ok(mostOrderedProduct);
+        }
+        [HttpGet("itemsShipped")]
+        public async Task<int> GetShippedOrders(CancellationToken cancellationToken)
+        {
+            var numberOfItems = await _dbContext.Orders.Where(x => x.IsShipped).CountAsync(cancellationToken);
+            return numberOfItems;
         }
     }
 }
