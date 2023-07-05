@@ -7,6 +7,7 @@ using eCommerceAPI.Business.Users.Queries.GetUserDetails;
 using eCommerceAPI.Business.Users.Queries.GetUserFavorites;
 using eCommerceAPI.Business.Users.Queries.LoginUser;
 using eCommerceAPI.Data;
+using eCommerceAPI.Data.Addresses;
 using eCommerceAPI.Data.Favorites;
 using eCommerceAPI.Data.Products;
 using eCommerceAPI.Data.Users;
@@ -91,7 +92,25 @@ namespace eCommerceAPI.Controllers.Users
             {
                 return NotFound("The user does not exist");
             }
-            var foundUserDetails = await _dbContext.Addresses.Include(x => x.User).FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+            var foundUserDetails = await _dbContext.Addresses
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+            if(foundUserDetails == null)
+            {
+                var address = new Address
+                {
+                    UserId = request.UserId,
+                    City = request.City,
+                    Country = request.Country,
+                    Region = request.Region,
+                    PhoneNumber = request.UserPhoneNumber,
+                    AddressLine = request.AddressLine,
+                    PostalCode = request.PostalCode
+                };
+                await _dbContext.AddAsync(address, cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+                return Ok(200);
+            }
             foundUserDetails.PhoneNumber = request.UserPhoneNumber ?? foundUserDetails.PhoneNumber ?? string.Empty;
             foundUserDetails.City = request.City ?? foundUserDetails.City ?? string.Empty;
             foundUserDetails.Country = request.Country ?? foundUserDetails.Country ?? string.Empty;
@@ -195,7 +214,10 @@ namespace eCommerceAPI.Controllers.Users
             {
                 return NotFound("User not found");
             }
-            var product = await _dbContext.Products.Where(x => x.Id == productId).AsNoTracking().FirstOrDefaultAsync(cancellationToken);
+            var product = await _dbContext.Products
+                .Where(x => x.Id == productId)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (product == null)
             {

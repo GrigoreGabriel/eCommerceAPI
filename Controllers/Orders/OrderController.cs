@@ -22,24 +22,6 @@ namespace eCommerceAPI.Controllers.Orders
         {
             _dbContext = dbContext;
         }
-
-        //[HttpGet("ordersByUser")]
-        //public async Task<List<GetUsersOrdersResponse>> GetAllOrders([FromQuery] Guid userId, CancellationToken cancellationToken)
-        //{
-        //    var usersOrders = await _dbContext.Orders
-        //        .Include(x => x.OrderDetails)
-        //        .Include(x => x.User)
-        //            .Where(x => x.UserId == userId)
-        //        .Select(x => new GetUsersOrdersResponse
-        //        {
-        //            Id = x.Id,
-        //            OrderDate = x.OrderTime,
-        //            TotalValue = x.OrderTotal
-        //        })
-        //        .ToListAsync(cancellationToken);
-
-        //    return usersOrders;
-        //}
         [HttpGet("orderById")]
         public async Task<List<GetOrderByIdResponse>> GetOrderById([FromQuery] Guid orderId, CancellationToken cancellationToken)
         {
@@ -105,8 +87,13 @@ namespace eCommerceAPI.Controllers.Orders
         [HttpPost("checkout")]
         public async Task<Guid> Checkout([FromBody] CheckoutRequest request, CancellationToken cancellationToken)
         {
-            var user = await _dbContext.Users.Include(x => x.Address).FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
-            var cart = await _dbContext.ShoppingCarts.Include(x => x.ShoppingCartItems).ThenInclude(x => x.ProductItem).FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
+            var user = await _dbContext.Users
+                .Include(x => x.Address)
+                .FirstOrDefaultAsync(x => x.Id == request.UserId, cancellationToken);
+            var cart = await _dbContext.ShoppingCarts
+                .Include(x => x.ShoppingCartItems)
+                    .ThenInclude(x => x.ProductItem)
+                    .FirstOrDefaultAsync(x => x.UserId == request.UserId, cancellationToken);
             var order = new Order
             {
                 Id = Guid.NewGuid(),
@@ -125,9 +112,10 @@ namespace eCommerceAPI.Controllers.Orders
                     Quantity = item.Quantity,
                     ItemsTotalValue = item.Quantity * item.ProductItem.Price
                 });
+                var productStock=await _dbContext.ProductItems.FirstOrDefaultAsync(x => x.Id == item.ProductItemId,cancellationToken);
+                productStock.QtyInStock -= item.Quantity;
                 order.OrderTotal += item.Quantity * item.ProductItem.Price;
             }
-            //shipping
             order.OrderTotal += 5;
 
             await _dbContext.AddAsync(order, cancellationToken);
